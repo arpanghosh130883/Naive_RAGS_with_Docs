@@ -111,6 +111,92 @@ def query_documents(question, n_results=2):
     #     distance = results["distances"][0][idx]
     #     print(f"Found document chunk: {document} (ID: {doc_id}, Distance: {distance})")
 
+'''
+You’re looking at the retrieval part of RAG. Let’s unpack your code:
+
+def query_documents(question, n_results=2):
+    # query_embedding = get_openai_embedding(question)
+    results = collection.query(query_texts=question, n_results=n_results)
+
+    # Extract the relevant chunks
+    relevant_chunks = [doc for sublist in results["documents"] for doc in sublist]
+    print("==== Returning relevant chunks ====")
+    return relevant_chunks
+
+🔎 How retrieval is happening
+
+You pass in a natural language question.
+Example: "What are the benefits of RAG?"
+
+.query() is called on collection.
+
+collection is likely a vector database collection (for example, in Chroma, Pinecone, Weaviate, or FAISS).
+
+That database already contains document embeddings created earlier with something like get_openai_embedding().
+
+query_texts=question
+
+The vector DB automatically takes your query string (question), converts it into an embedding using the stored embedding function, and compares it with stored document embeddings.
+
+It performs a vector similarity search (usually cosine similarity or dot product).
+
+n_results=2
+
+This limits the retrieval to the top 2 most similar chunks.
+
+In other words, it finds the two documents whose embeddings are closest to the query embedding.
+
+results["documents"]
+
+This contains the actual text chunks (the content) of the top matches.
+
+The list comprehension flattens them into a single Python list (relevant_chunks).
+
+⚙️ What .query() does internally
+
+Converts the query string into an embedding vector.
+
+Compares that embedding with stored vectors in the collection.
+
+Returns:
+
+documents: the actual text chunks of top matches.
+
+ids: the unique IDs of those chunks.
+
+distances/scores: similarity values (lower = more similar, depending on DB).
+
+For example, in ChromaDB:
+
+results = collection.query(
+    query_texts=["What is RAG?"],
+    n_results=2
+)
+print(results)
+
+
+Might return:
+
+{
+  'ids': [['doc1_chunk2', 'doc3_chunk1']],
+  'documents': [['RAG stands for Retrieval Augmented Generation...', 
+                 'It improves LLM accuracy by fetching relevant context...']],
+  'distances': [[0.12, 0.18]]
+}
+
+✅ In summary
+
+Retrieval in your RAG pipeline is done via .query() on the vector store.
+
+It takes the query, turns it into an embedding, compares it with all stored embeddings, and returns the most relevant text chunks.
+
+These chunks will later be augmented into the LLM prompt → so the LLM answers with context from your knowledge base.
+
+'''
+
+
+
+
 
 # Function to generate a response from OpenAI
 def generate_response(question, relevant_chunks):
